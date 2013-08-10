@@ -1,0 +1,137 @@
+#the-clubhouse {
+	position:relative;
+	padding:20px;
+	margin-right:15px;
+	border:2px solid black;
+	border-radius:0px 5px 5px 5px;
+	z-index:1;
+}
+
+/**
+ * Navigation
+ */
+#clubhouse-nav {
+	position:relative;
+	top:2px;
+	clear:both;
+	height:30px;
+	margin:15px 15px 0px 0px;
+	z-index:2;
+}
+#clubhouse-nav ul {
+	margin:0px;
+	padding:0px;
+	height:100%;
+}
+#clubhouse-nav ul li {
+	display:block;
+	float:left;
+	padding:6px 15px 3px 15px;
+	margin:0px 3px 0px 0px;
+	background-color:#FFFFFF;
+	border:2px solid black;
+	border-radius:5px 5px 0px 0px;
+}
+#clubhouse-nav ul li.current {
+	border-bottom:none;
+	padding:6px 15px 5px 15px;
+}
+#clubhouse-nav ul li a {
+	height:100%;
+	width:100%;
+	text-decoration:none;
+	font-weight:bold;
+	text-transform:uppercase;
+}
+
+/**
+ * Tables
+ */
+.clubhouse-table {
+	width:100%;
+	margin-bottom:20px;
+}
+.clubhouse-table thead {
+	background-color:#AAAAAA;
+}
+.clubhouse-table tbody tr:nth-child(odd) td {
+	background-color:#EEEEEE;
+}
+.clubhouse-table th {
+	text-align:left;
+}
+.clubhouse-table th,
+.clubhouse-table td {
+	padding:3px 5px;
+}
+.clubhouse-list-heading {
+	font-size:1.2em;
+}
+.clubhouse-list-columns {
+	font-size:0.8em;
+	background-color:#CCCCCC;
+}
+
+/**
+ * Forms
+ */
+.clubhouse-form div.x2,
+.clubhouse-form div.x3,
+.clubhouse-form div.x4 {
+	float:left;
+}
+.clubhouse-form div.x2 {
+	width:48%;
+	margin-right:2%;
+}
+.clubhouse-form div.x3 {
+	width:32%;
+	margin-right:1%;
+}
+.clubhouse-form div.x4 {
+	width:24%;
+	margin-right:1%;
+}
+.clubhouse-form form label,
+.clubhouse-form input,
+.clubhouse-form select,
+.clubhouse-form textarea {
+	display:block;
+	width:100%;
+}
+.clubhouse-form input,
+.clubhouse-form select,
+.clubhouse-form textarea {
+	margin-bottom:10px;
+}
+.clubhouse-form input[type=submit] {
+	width:120px;
+}
+.clubhouse-form .clearer {
+	clear:both;
+}
+
+/**
+ * Messaging
+ */
+#messages div {
+	margin:0px 15px 0px 0px;
+}
+div.success {
+    background-color: #EBFFE8;
+    border: 1px solid #00CC00;
+    border-radius: 3px 3px 3px 3px;
+    padding: 0 0.6em;
+}
+div.success p {
+	margin: 0.5em 0;
+    padding: 2px;
+}
+
+
+/**
+ * Sortable
+ */
+#sortable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+#sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.4em; height: 18px; }
+#sortable li span { position: absolute; margin-left: -1.3em; }
