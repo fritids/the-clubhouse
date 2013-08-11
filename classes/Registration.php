@@ -43,7 +43,7 @@ class Registration {
 
 		// Messaging
 		$GLOBALS['CH_SysMessages']->storeMessages(array(
-				'event_select_failed'	=> array('type' => 'error', 	'message' => __('Could not locate selected event. <a href="?page=' . $_GET['page'] . '&control=events">View Event List</a>')),
+				'event_select_failed'	=> array('type' => 'error', 	'message' => __('Could not locate selected event. <a href="?page=clubhouse-config&control=events">View Event List</a>')),
 				'update_failed'	   		=> array('type' => 'error', 	'message' => __('Could not update event information. Please try again.')),
 				'event_updated'	   		=> array('type' => 'updated', 	'message' => __('Event information updated.')),
 				'insert_failed'	   		=> array('type' => 'error', 	'message' => __('Event could not be created.')),

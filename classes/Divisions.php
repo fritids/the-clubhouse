@@ -29,7 +29,7 @@ class Divisions {
 
 		// Messaging
 		$GLOBALS['CH_SysMessages']->storeMessages(array(
-				'division_select_failed'		=> array('type' => 'error', 	'message' => __('Could not locate selected division. <a href="?page=' . $_GET['page'] . '&control=divisions">View Division List</a>')),
+				'division_select_failed'		=> array('type' => 'error', 	'message' => __('Could not locate selected division. <a href="?page=clubhouse-config&control=divisions">View Division List</a>')),
 				'division_update_failed'	   	=> array('type' => 'error', 	'message' => __('Could not update division information. Please try again.')),
 				'division_updated'	   			=> array('type' => 'updated', 	'message' => __('Division information updated.')),
 				'division_insert_failed'	   	=> array('type' => 'error', 	'message' => __('Division could not be created.')),
@@ -52,7 +52,7 @@ class Divisions {
 		$division = $wpdb->get_row(
 				"SELECT * FROM `" . CLUBHOUSE_TABLE_DIVISIONS . "` WHERE `id` = '" . $wpdb->escape($id) . "';", 'ARRAY_A'
 		);
-		if (empty($division)) {
+		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('division_select_failed');
 		}
 		return $division;
@@ -66,7 +66,7 @@ class Divisions {
 		global $wpdb;
 		$query = !empty($query) ? $query : "SELECT * FROM `" . CLUBHOUSE_TABLE_DIVISIONS . "`  ORDER BY `order` ASC;";
 		$divisions = $wpdb->get_results($query, 'ARRAY_A');
-		if (empty($divisions)) {
+		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('division_select_failed');
 		}
 		return $divisions;
@@ -80,7 +80,7 @@ class Divisions {
 		global $wpdb;
 		$division = $wpdb->get_row(
 				"SELECT `id` FROM `" . CLUBHOUSE_TABLE_DIVISIONS . "` WHERE
-				`name` = '" . $wpdb->escape($config['name']) . "';"
+				`division_name` = '" . $wpdb->escape($config['division_name']) . "';"
 		);
 		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('failed_confirm');
@@ -99,7 +99,10 @@ class Divisions {
 		global $wpdb;
 
 		// Get Division
-		$division = '';
+		$division = array(
+			'id'=>'',
+			'division_name'=>'',
+		);
 		if ($config['action'] == 'edit' && !empty($config['id'])) {
 			$division = $this->getDivision($config['id']);
 		}
@@ -108,17 +111,18 @@ class Divisions {
 		if ( isset($_POST['submit']) ) {
 
 			// Validate Referrer
+			global $clubhouse_nonce;
 			check_admin_referer( $clubhouse_nonce );
 			if ( isset($_POST['form_check']) && $_POST['form_check'] == 'division' ) {
 
 				// Set Form Vars
-				$fields = array('name');
+				$fields = array('division_name');
 				foreach ($fields as $field) {
 					$division[$field] = (isset($_POST[$field])) ? $_POST[$field] : '';
 				}
 
 				// Check Required
-				if (empty($division['name'])) $GLOBALS['CH_SysMessages']->collectResponse('no_value');
+				if (empty($division['division_name'])) $GLOBALS['CH_SysMessages']->collectResponse('no_value');
 
 				// Proceed if No Errors
 				if (empty($GLOBALS['CH_SysMessages']->responses)) {
@@ -128,7 +132,7 @@ class Divisions {
 
 						// Check for Duplicate
 						$check_division = $this->confirmDuplicate(array(
-							'name'  => $wpdb->escape($_POST['name'])
+							'division_name'  => $wpdb->escape($division['division_name'])
 						));
 
 						// Get Highest Order
@@ -139,7 +143,7 @@ class Divisions {
 
 							if (!$wpdb->query(
 									"INSERT INTO `" . CLUBHOUSE_TABLE_DIVISIONS . "` SET
-									`name`  = '" . $wpdb->escape($_POST['name'])  . "',
+									`division_name`  = '" . $wpdb->escape($_POST['division_name'])  . "',
 									`order`  = '" . $wpdb->escape($order['max']+1)  . "';"
 							)
 							) {
@@ -171,11 +175,11 @@ class Divisions {
 						if ($wpdb->update(
 								CLUBHOUSE_TABLE_DIVISIONS,
 								array(
-										'name'  => $wpdb->escape($division['name']),	   // string
+									'division_name'  => $wpdb->escape($division['division_name']),	   // string
 								),
 								array( 'id' => $config['id'] ),
 								array(
-										'%s', // string
+									'%s', // string
 								),
 								array( '%d' )
 
@@ -212,14 +216,16 @@ class Divisions {
 
 			<form id="clubhouse-division-form" method="post" action="?page=<?php echo $_GET['page']; ?>&control=divisions">
 
-				<?php clubhouse_nonce_field($clubhouse_nonce); // form validation ?>
+				<?php
+				global $clubhouse_nonce;
+				clubhouse_nonce_field($clubhouse_nonce); // form validation ?>
 				<input type="hidden" name="id" value="<?php echo $division['id']; ?>">
 				<input type="hidden" name="action" value="<?php echo $config['action']; ?>">
 				<input type="hidden" name="form_check" value="division">
 
 				<div class="x3">
 					<label>Division Name</label>
-					<input type="text" name="name" value="<?php echo $division['name']; ?>">
+					<input type="text" name="division_name" value="<?php echo $division['division_name']; ?>">
 				</div>
 
 				<div class="clearer">
@@ -275,12 +281,12 @@ class Divisions {
 						</tr>
 					</thead>
 
-					<tbody id="sortable" class="clubhouse-divisions">
+					<tbody id="clubhouse-divisions">
 
 						<?php foreach($divisions as $division) { ?>
 						<tr id="division-<?php echo $division['id']; ?>">
 							<td>.</td>
-							<td><?php echo $division['name']; ?></td>
+							<td><?php echo $division['division_name']; ?></td>
 							<td>
 								<a href="?page=<?php echo $_GET['page']; ?>&control=divisions&action=edit&id=<?php echo $division['id']; ?>">edit</a> |
 								<a href="?page=<?php echo $_GET['page']; ?>&control=divisions&action=delete&id=<?php echo $division['id']; ?>" onclick="return confirm('Are you sure you want to delete this division?');">delete</a>
@@ -304,16 +310,17 @@ class Divisions {
 
 }
 
-/****** AJAX ******/
-add_action( 'admin_footer', 'divisions_ajax_javascript' );
 
+/****** AJAX ******/
+
+add_action( 'admin_footer', 'divisions_ajax_javascript' );
 function divisions_ajax_javascript() {
-	?>
+?>
 <script type="text/javascript" >
 jQuery(document).ready(function($) {
 
 	// Sortable
-	$( "#sortable .clubhouse-divisions" ).sortable({
+	$( "#clubhouse-divisions" ).sortable({
 		stop: function (event, ui) {
 
 			var data = {
@@ -334,10 +341,9 @@ jQuery(document).ready(function($) {
 <?php
 }
 
-add_action('wp_ajax_division_actions', 'division_actions_callback');
-
-function division_actions_callback() {
-	global $wpdb; // this is how you get access to the database
+add_action('wp_ajax_division_actions', 'divisions_ajax_callback');
+function divisions_ajax_callback() {
+	global $wpdb;
 
 	//var_dump($_REQUEST);
 	$division_list = explode('&',$_REQUEST['divisions']);

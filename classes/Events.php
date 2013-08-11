@@ -14,43 +14,7 @@
  * General Functionality
  * - Manage Event Information
  * - Communicate with players
-
  *
-Event
-----------------
-
-- tournament director, email address, phone number
-- emails (welcome, updates)
-- fees
-
-Rounds (tournaments)
-- day 1, # rounds, course
-- day 2, # rounds, course
-
-
-Weekly (league)
-- day of week
-- time
-- fees
-
-
-Monthly (tours)
-- dates, locations, times
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
  */
 
 class Events {
@@ -83,7 +47,7 @@ class Events {
 
 		// Messaging
 		$GLOBALS['CH_SysMessages']->storeMessages(array(
-				'event_select_failed'		=> array('type' => 'error', 	'message' => __('Could not locate selected event. <a href="?page=' . $_GET['page'] . '&control=events">View Event List</a>')),
+				'event_select_failed'		=> array('type' => 'error', 	'message' => __('Could not locate selected event. <a href="?page=clubhouse-config&control=events">View Event List</a>')),
 				'event_update_failed'	   	=> array('type' => 'error', 	'message' => __('Could not update event information. Please try again.')),
 				'event_updated'	   			=> array('type' => 'updated', 	'message' => __('Event information updated.')),
 				'event_insert_failed'	   	=> array('type' => 'error', 	'message' => __('Event could not be created.')),
@@ -93,10 +57,8 @@ class Events {
 				'event_failed_confirm'		=> array('type' => 'error', 	'message' => __('Could not confir m if event already exists.')),
 				'event_failed_duplicate'	=> array('type' => 'error', 	'message' => __('Event already exists.')),
 				'event_no_name'				=> array('type' => 'error', 	'message' => __('You must provide a name.')),
-				'event_no_date'				=> array('type' => 'error', 	'message' => __('You must provide a valid date.')),
 				'event_no_divisions'		=> array('type' => 'error', 	'message' => __('You must select at least one division.')),
-				'event_no_itterator'		=> array('type' => 'error', 	'message' => __('You must select an itterator.')),
-				'event_no_duration'			=> array('type' => 'error', 	'message' => __('You must provide a duration.')),
+				'event_no_type'				=> array('type' => 'error', 	'message' => __('You must select a type.')),
 		));
 
 		// Get Divisions
@@ -113,7 +75,7 @@ class Events {
 		$event = $wpdb->get_row(
 				"SELECT * FROM `" . CLUBHOUSE_TABLE_EVENTS . "` WHERE `id` = '" . $wpdb->escape($id) . "';", 'ARRAY_A'
 		);
-		if (empty($event)) {
+		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('event_select_failed');
 		}
 		return $event;
@@ -127,7 +89,7 @@ class Events {
 		global $wpdb;
 		$query = !empty($query) ? $query : "SELECT * FROM `" . CLUBHOUSE_TABLE_EVENTS . "`;";
 		$events = $wpdb->get_results($query, 'ARRAY_A');
-		if (empty($events)) {
+		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('event_select_failed');
 		}
 		return $events;
@@ -141,7 +103,7 @@ class Events {
 		global $wpdb;
 		$event = $wpdb->get_row(
 				"SELECT `id` FROM `" . CLUBHOUSE_TABLE_EVENTS . "` WHERE
-				`name` = '" . $wpdb->escape($config['name']) . "';"
+				`event_name` = '" . $wpdb->escape($config['event_name']) . "';"
 		);
 		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('event_failed_confirm');
@@ -160,7 +122,13 @@ class Events {
 		global $wpdb;
 
 		// Get Event
-		$event = '';
+		$event = array(
+			'id'=>'',
+			'event_name'=>'',
+			'divisions'=>'',
+			'email'=>'',
+			'division_id'=>'',
+		);
 		if ($config['action'] == 'edit' && !empty($config['id'])) {
 			$event = $this->getEvent($config['id']);
 		}
@@ -169,21 +137,20 @@ class Events {
 		if ( isset($_POST['submit']) ) {
 
 			// Validate Referrer
+			global $clubhouse_nonce;
 			check_admin_referer( $clubhouse_nonce );
 			if ( isset($_POST['form_check']) && $_POST['form_check'] == 'event' ) {
 
 				// Set Form Vars
-				$fields = array('name','date','divisions','itterator','duration');
+				$fields = array('event_name','divisions','type');
 				foreach ($fields as $field) {
 					$event[$field] = (isset($_POST[$field])) ? $_POST[$field] : '';
 				}
 
 				// Check Required
-				if (empty($event['name'])) 		$GLOBALS['CH_SysMessages']->collectResponse('event_no_name');
-				if (empty($event['date'])) 		$GLOBALS['CH_SysMessages']->collectResponse('event_no_date');
-				if (empty($event['divisions'])) $GLOBALS['CH_SysMessages']->collectResponse('event_no_divisions');
-				if (empty($event['itterator'])) $GLOBALS['CH_SysMessages']->collectResponse('event_no_itterator');
-				if (empty($event['duration'])) 	$GLOBALS['CH_SysMessages']->collectResponse('event_no_duration');
+				if (empty($event['event_name'])) $GLOBALS['CH_SysMessages']->collectResponse('event_no_name');
+				if (empty($event['divisions']))  $GLOBALS['CH_SysMessages']->collectResponse('event_no_divisions');
+				if (empty($event['type'])) 		 $GLOBALS['CH_SysMessages']->collectResponse('event_no_type');
 
 				// Proceed if No Errors
 				if (empty($GLOBALS['CH_SysMessages']->responses)) {
@@ -193,7 +160,7 @@ class Events {
 
 						// Check for Event
 						$check_event = $this->confirmDuplicate(array(
-							'name'  => $wpdb->escape($_POST['name'])
+							'event_name' => $wpdb->escape($event['event_name'])
 						));
 
 						// Insert Event
@@ -201,11 +168,9 @@ class Events {
 
 							if (!$wpdb->query(
 									"INSERT INTO `" . CLUBHOUSE_TABLE_EVENTS . "` SET
-									`name`  	= '" . $wpdb->escape($_POST['name']) . "',
-									'date'      = '" . $wpdb->escape($event['date']) . "',
-									'divisions' = '" . $wpdb->escape(serialize($event['divisions'])) . "',
-									'itterator' = '" . $wpdb->escape($event['itterator']) . "',
-									'duration'  = '" . $wpdb->escape($event['duration']) . "';"
+									`event_name`  = '" . $wpdb->escape($_POST['event_name']) . "',
+									`divisions`   = '" . $wpdb->escape(serialize($event['divisions'])) . "',
+									`type` 		  = '" . $wpdb->escape($event['type']) . "';"
 							)) {
 
 								// Error
@@ -235,19 +200,15 @@ class Events {
 						if ($wpdb->update(
 								CLUBHOUSE_TABLE_EVENTS,
 								array(
-										'name' 		=> $wpdb->escape($event['name']),	   				// string
-										'date'      => $wpdb->escape($event['date']),					// string
-										'divisions' => $wpdb->escape(serialize($event['divisions'])),	// string
-										'itterator' => $wpdb->escape($event['itterator']),	  			// string
-										'duration'  => $wpdb->escape($event['duration']),	   			// int
+										'event_name'	=> $wpdb->escape($event['event_name']),	   			// string
+										'divisions' 	=> $wpdb->escape(serialize($event['divisions'])),	// string
+										'type' 			=> $wpdb->escape($event['type']),	  				// string
 								),
 								array( 'id' => $config['id'] ),
 								array(
 										'%s', // string
 										'%s', // string
 										'%s', // string
-										'%s', // string
-										'%d', // int
 								),
 								array( '%d' )
 
@@ -275,11 +236,10 @@ class Events {
 		}
 
 		// Prep Data
-		$event['divisions'] = unserialize(stripslashes($event['divisions']));
+		$event['divisions'] = is_array($event['divisions']) ? $event['divisions'] : unserialize(stripslashes($event['divisions']));
 
 		// Get Manager
 		ob_start();
-		$events['divisions'] = json_decode($events['divisions']);
 		?>
 		<div class="clubhouse-form clubhouse-admin">
 
@@ -288,31 +248,36 @@ class Events {
 
 			<form id="clubhouse-event-form" method="post" action="?page=<?php echo $_GET['page']; ?>&control=events">
 
-				<?php clubhouse_nonce_field($clubhouse_nonce); // form validation ?>
+				<?php
+				global $clubhouse_nonce;
+				clubhouse_nonce_field($clubhouse_nonce); // form validation ?>
 				<input type="hidden" name="id" value="<?php echo $event['id']; ?>">
 				<input type="hidden" name="action" value="<?php echo $config['action']; ?>">
 				<input type="hidden" name="form_check" value="event">
 
 				<div class="x3">
 
-					<label>Event Name</label>
-					<input type="text" name="name" value="<?php echo $event['name']; ?>">
+					<fieldset>
 
-					<label>Event Date(s)</label>
-					<input type="text" name="dates" value="<?php echo $event['dates']; ?>" class="datepicker">
+						<h3>Details</h3>
 
-					<label>Itterator</label>
-					<select name="itterator">
-						<?php $itterators = array('rounds','weekly','monthly'); ?>
-						<option value="">Choose One</option>
-						<?php foreach ($itterators as $itterator) { ?>
-							<?php $selected = $itterator == $event['itterator'] ? ' selected="selected"' : '' ; ?>
-							<option value="<?php echo $itterator; ?>"<?php echo $selected; ?>><?php echo ucwords($itterator); ?></option>
-						<?php } ?>
-					</select>
+						<label>Event Name</label>
+						<input type="text" name="event_name" value="<?php echo $event['event_name']; ?>">
 
-					<label>Duration</label>
-					<input type="text" name="duration" value="<?php echo $event['duration']; ?>" maxlength="2">
+						<label>Type</label>
+						<select name="type" id="type_selector">
+							<?php $types = array('weekly','tournament','tour'); ?>
+							<option value="">Choose One</option>
+							<?php foreach ($types as $type) { ?>
+								<?php $selected = $type == $event['type'] ? ' selected="selected"' : '' ; ?>
+								<option value="<?php echo $type; ?>"<?php echo $selected; ?>><?php echo ucwords($type); ?></option>
+							<?php } ?>
+						</select>
+
+						<fieldset id="event-details"></fieldset>
+
+					</fieldset>
+
 
 				</div>
 
@@ -321,7 +286,7 @@ class Events {
 					<select name="divisions[]" multiple="multiple" size="8">
 					<?php foreach ($this->divisions as $division) { ?>
 						<?php $selected = is_array($event['divisions']) && in_array($division['id'], $event['divisions']) ? ' selected="selected"' : '' ; ?>
-						<option value="<?php echo $division['id']; ?>"<?php echo $selected; ?>><?php echo $division['name']; ?></option>
+						<option value="<?php echo $division['id']; ?>"<?php echo $selected; ?>><?php echo $division['division_name']; ?></option>
 					<?php } ?>
 					</select>
 				</div>
@@ -374,8 +339,7 @@ class Events {
 					<thead>
 						<tr class="clubhouse-list-columns">
 							<td>Name</td>
-							<td>Itterator</td>
-							<td>Duration</td>
+							<td>Type</td>
 							<td style="width:65px;">&nbsp;</td>
 						</tr>
 					</thead>
@@ -384,9 +348,8 @@ class Events {
 
 						<?php foreach($events as $event) { ?>
 						<tr>
-							<td><?php echo $event['name']; ?></td>
-							<td><?php echo $event['itterator']; ?></td>
-							<td><?php echo $event['duration']; ?></td>
+							<td><?php echo $event['event_name']; ?></td>
+							<td><?php echo $event['type']; ?></td>
 							<td>
 								<a href="?page=<?php echo $_GET['page']; ?>&control=events&action=edit&id=<?php echo $event['id']; ?>">edit</a> |
 								<a href="?page=<?php echo $_GET['page']; ?>&control=events&action=delete&id=<?php echo $event['id']; ?>" onclick="return confirm('Are you sure you want to delete this event?');">delete</a>
@@ -410,11 +373,12 @@ class Events {
 
 }
 
-/****** AJAX ******/
-add_action( 'admin_footer', 'events_ajax_javascript' );
 
+/****** AJAX ******/
+
+add_action( 'admin_footer', 'events_ajax_javascript' );
 function events_ajax_javascript() {
-	?>
+?>
 <script type="text/javascript" >
 jQuery(document).ready(function($) {
 
@@ -424,16 +388,102 @@ jQuery(document).ready(function($) {
 		dateFormat: "MM d, yy"
 	});
 
+	$('#type_selector').bind('change', function() {
+
+		// Count Existing Controls
+		var numControls = $('.event-controls').length,
+			type = $(this).val();
+
+		var data = {
+			action: 'get_controls',
+			controlset_id: numControls+1,
+			type: type,
+		};
+
+		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+		$.post(ajaxurl, data, function(response) {
+			console.log('Got this from the server: ' + response);
+			//if (type != 'tour') {
+			//	$('#event-details').html(response);
+			//} else {
+			//	$('#event-details').append(response);
+			//}
+		});
+	});
+
 });
 </script>
 <?php
 }
 
-add_action('wp_ajax_event_actions', 'event_actions_callback');
+add_action('wp_ajax_event_actions', 'events_ajax_callback');
+function events_ajax_callback() {
+	global $wpdb;
 
-function event_actions_callback() {
-	global $wpdb; // this is how you get access to the database
+	echo "here";
 
+	// Get Event Controls
+	//if ($_REQUEST['action'] == 'get_controls' && is_numeric($_REQUEST['controlset_id'])) {
+	//	$controls = eventControls(array('id' => $_REQUEST['get_controls'], 'type' => $_REQUEST['type']));
+	//	echo $controls;
+	//}
+
+	die(); // this is required to return a proper result
 }
+
+/****** SUPPORT FUNCTIONS ******/
+
+/**
+ * Event Controls
+ * Purpose: modular output of controls specific to an event, or stop on an event
+ */
+function eventControls($config = array()) {
+
+	$controlset_id = $config['id'];
+
+	// Collect Event Controls
+	ob_start();
+	?>
+<div id="event-controls-<?php echo $controlset_id; ?>" class="event-controls">
+
+	<label>Tournament Director</label>
+	<input type="text" class="autocomplete" name="td_<?php echo $controlset_id; ?>" value="" />
+
+	<label>Course</label>
+	<input type="text" class="autocomplete"  name="course_<?php echo $controlset_id; ?>" value="" />
+
+	<?php if ($config['type'] == 'weekly') { ?>
+
+		<label>Day of Week</label>
+		<select name="weekday_<?php echo $controlset_id; ?>">
+			<option value="">Choose One</option>
+			<option value="Mon">Monday</option>
+			<option value="Tue">Tuesday</option>
+			<option value="Wed">Wednesday</option>
+			<option value="Thu">Thursday</option>
+			<option value="Fri">Friday</option>
+			<option value="Sat">Saturday</option>
+			<option value="Sun">Sunday</option>
+		</select>
+
+	<?php } else { ?>
+
+		<label>Start Date</label>
+		<input type="text" class="datepicker" name="start_date_<?php echo $controlset_id; ?>" value="" />
+
+		<label>End Date</label>
+		<input type="text" class="datepicker" name="end_date_<?php echo $controlset_id; ?>" value="" />
+
+	<?php } ?>
+
+	<label>Players Meeting</label>
+	<input type="text" class="timepicker" name="players_meeting_<?php echo $controlset_id; ?>" value="" />
+
+</div>
+<?php
+		$output = ob_get_clean();
+		return $output;
+
+	}
 
 ?>

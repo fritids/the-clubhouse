@@ -49,99 +49,106 @@ License: GPLv2 or later
  *   - Tie into Registration System
  *   - Tie into BagTag System (TBD)
  *   - Expand the event duration and such to create a more complex format.
+ *   - Connect TD and Course fields to autocomplete lookup for value.
  *
  *
-- emails (welcome, updates)
-- fees
-
-
-Tournament (1 tournament director)
-- day 1, # rounds, course
-- day 2, # rounds, course
-
-
-Weekly Eventn (1 host)
-- day of week
-- time
-- fees
-
-
-Tour (Multiple Tournament Directors)
-- # stops, rounds per stop, dates, rounds per date, locations, times
-
-
-Rough Outline:
---------------------
-
-- Event Type (Weekly Event, Tournament, Tour)
-
-- Event Name (i.e. Weekly Handicap League, Hub City Huck, Duck Golf)
-
-- Event Details
-
--- dependant on type --
-
-  Weekly / Tournament ("modularize" these controls so they can easily be duplicated for tour stops)
-
-  	- Start / End Date, Day of Week, Players Meeting Time
-
-  	- Location(s) / Course(s)
-
-	- Tournament Director
-	  - name
-	  - email
-	  - phone number
-
-  Tour
-
-  	- Stops
-
-  		- Per Stop: Same as weekly/tournament events
-
-  General
-
-  	- emails (welcome/thank you, confirmed registration, payment received, 1 weeks notice, thanks for coming!)
-
-    - Fees
-
-    - Rules / Stipulations / Terms and Conditions
-
-
---
-
-Classes
-- tournament directors
-- emailer (put on hold for now - use PHPMailer, or another)
-	Methods
-	- setters and getters for each variable
-	- send
-	Variables
-	- sender (must be from the local domain, if one is not available it should use a proxy)
-	- recipient
-	- subject
-	- message
-- price structures
-	- division based pricing
-	- added fees (ace pot, pdga event fee)
-	- other
-- sponsors (restricted by login/role/event)
-	- company
-	- logo
-	- url
-	- facebook
-	- twitter
-- locations
-	- course name
-	- address, city, prov/state, country
-
-
-Database Changes
-- CREATE TABLE `event_td`
-- CREATE TABLE `price_structures`
-
+ *
+ *   Form Flow
+ *
+ *   - emails (welcome, updates)
+ *   - fees
+ *
+ *
+ *   Tournament (1 tournament director)
+ *   - day 1, # rounds, course
+ *   - day 2, # rounds, course
+ *
+ *
+ *   Weekly Eventn (1 host)
+ *   - day of week
+ *   - time
+ *   - fees
+ *
+ *
+ *   Tour (Multiple Tournament Directors)
+ *   - # stops, rounds per stop, dates, rounds per date, locations, times
+ *
+ *
+ *   Rough Outline:
+ *   --------------------
+ *
+ *   - Event Type (Weekly Event, Tournament, Tour)
+ *
+ *   - Event Name (i.e. Weekly Handicap League, Hub City Huck, Duck Golf)
+ *
+ *   - Event Details
+ *
+ *   -- dependant on type --
+ *
+ *     Weekly / Tournament ("modularize" these controls so they can easily be duplicated for tour stops)
+ *
+ *     	- Start / End Date, Day of Week, Players Meeting Time
+ *
+ *     	- Location(s) / Course(s)
+ *
+ *   	- Tournament Director
+ *   	  - name
+ *   	  - email
+ *   	  - phone number
+ *
+ *     Tour
+ *
+ *     	- Stops
+ *
+ *     		- Per Stop: Same as weekly/tournament events
+ *
+ *     General
+ *
+ *     	- emails (welcome/thank you, confirmed registration, payment received, 1 weeks notice, thanks for coming!)
+ *
+ *       - Fees
+ *
+ *       - Rules / Stipulations / Terms and Conditions
+ *
+ *
+ *   --
+ *
+ * New Classes
+ *   - tournament directors
+ *   - emailer (put on hold for now - use PHPMailer, or another)
+ *   	Methods
+ *   	- setters and getters for each variable
+ *   	- send
+ *   	Variables
+ *   	- sender (must be from the local domain, if one is not available it should use a proxy)
+ *   	- recipient
+ *   	- subject
+ *   	- message
+ *   - price structures
+ *   	- division based pricing
+ *   	- added fees (ace pot, pdga event fee)
+ *   	- other
+ *   - sponsors (restricted by login/role/event)
+ *   	- company
+ *   	- logo
+ *   	- url
+ *   	- facebook
+ *   	- twitter
+ *   - courses
+ *   	- course name
+ *   	- address, city, prov/state, country
+ *
+ *
+ * New Database Tables
+ *   - CREATE TABLE `event_td`
+ *   - CREATE TABLE `price_structures`
+ *   - CREATE TABLE `cities` (obtain list from, well, somewhere...)
+ *
  *
  * System Considerations:
  *  - build (optional) "tattler" system that notifies the creator (me) of any major faults in the system
+ *
+ *
  */
 // Make sure we don't expose any info if called directly
 if ( !function_exists( 'add_action' ) ) {
@@ -165,6 +172,7 @@ define('CLUBHOUSE_TABLE_EVENTS', 	$wpdb->prefix . 'clubhouse_events');
 define('CLUBHOUSE_TABLE_COURSES', 	$wpdb->prefix . 'clubhouse_courses');
 define('CLUBHOUSE_TABLE_SCORES', 	$wpdb->prefix . 'clubhouse_scores');
 define('CLUBHOUSE_TABLE_REGSYS', 	$wpdb->prefix . 'clubhouse_regsys');
+define('CLUBHOUSE_TABLE_DIRECTORS', $wpdb->prefix . 'clubhouse_directors');
 
 // Load System Message Class
 global $CH_SysMessages;
@@ -230,6 +238,7 @@ add_action('init', 'clubhouse_init');
 
 // Setup Nonce
 function clubhouse_nonce_field($action = -1) { return wp_nonce_field($action); }
+global $clubhouse_nonce;
 $clubhouse_nonce = 'clubhouse-update-key';
 
 // Display Form

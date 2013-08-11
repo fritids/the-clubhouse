@@ -56,7 +56,7 @@ class SysMessages {
 			$type = $this->messages[$response]['type'];
 
 			// Organize Messages
-			$messages[$type] = is_array($messages[$type]) ? $messages[$type] : array();
+			$messages[$type] = array_key_exists($type, $messages) ? $messages[$type] : array();
 			$messages[$type][] = $this->messages[$response]['message'];
 
 		}

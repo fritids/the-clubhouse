@@ -12,8 +12,6 @@ class Installer {
 		global $wpdb;
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
-		//echo "here";
-
 		// Plugin DB Version
 		$db_version = get_option( "CLUBHOUSE_DB_VERSION" );
 
@@ -118,7 +116,7 @@ class Installer {
 		$sql = "
 			CREATE TABLE " . CLUBHOUSE_TABLE_DIVISIONS . " (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-				`name` varchar(100) NOT NULL,
+				`division_name` varchar(100) NOT NULL,
 				`order` int(11) NOT NULL,
 				PRIMARY KEY (`id`)
 			) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
@@ -129,9 +127,9 @@ class Installer {
 		$sql = "
 			CREATE TABLE " . CLUBHOUSE_TABLE_EVENTS . " (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-				`name` varchar(100) NOT NULL,
-				`duration` int(10) NOT NULL,
-				`itterator` enum('round','weekly') NOT NULL,
+				`event_name` varchar(100) NOT NULL,
+				`divisions` text NOT NULL,
+				`type` enum('weekly','tournament','tour') NOT NULL,
 				PRIMARY KEY (`id`)
 			) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 		";
@@ -141,11 +139,12 @@ class Installer {
 		$sql = "
 			CREATE TABLE " . CLUBHOUSE_TABLE_COURSES . " (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-				`course` varchar(100) NOT NULL,
-				`holes` int(2) NOT NULL,
-				`tees` int(2) NOT NULL,
+				`course_name` varchar(100) NOT NULL,
+				`city` varchar(100) NOT NULL,
+				`state` varchar(100) NOT NULL,
+				`country` varchar(100) NOT NULL,
 				PRIMARY KEY (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+			) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 		";
 		dbDelta($sql);
 
@@ -169,7 +168,7 @@ class Installer {
 
 		// Regsys Table
 		$sql = "
-			CREATE TABLE wp_clubhouse_regsys (
+			CREATE TABLE " . CLUBHOUSE_TABLE_REGSYS . " (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 				`player_id` mediumint(9) NOT NULL,
 				`event_id` varchar(100) NOT NULL,
@@ -177,7 +176,20 @@ class Installer {
 				`confirmed` enum('t','f') DEFAULT 'f' NOT NULL,
 				`registered` timestamp NOT NULL default '0000-00-00 00:00:00',
 				PRIMARY KEY (`id`)
-			) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+			) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+		";
+		dbDelta($sql);
+
+		// Tournament Directors Table
+		$sql = "
+			CREATE TABLE " . CLUBHOUSE_TABLE_DIRECTORS . " (
+				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
+				`first_name` varchar(100) NOT NULL,
+				`last_name` varchar(100) NOT NULL,
+				`email` varchar(255) NOT NULL,
+				`phone_number` varchar(15) NOT NULL,
+				PRIMARY KEY (`id`)
+			) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 		";
 		dbDelta($sql);
 

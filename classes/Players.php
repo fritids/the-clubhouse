@@ -44,20 +44,21 @@ class Players {
 
 		// Messaging
 		$GLOBALS['CH_SysMessages']->storeMessages(array(
-				'player_select_failed'		=> array('type' => 'error', 	'message' => __('Could not locate selected player. <a href="?page=' . $_GET['page'] . '">View Player List</a>')),
-				'player_update_failed'	   	=> array('type' => 'error', 	'message' => __('Could not update player information. Please try again.')),
-				'player_updated'	    	=> array('type' => 'updated', 	'message' => __('Player information updated.')),
-				'player_insert_failed'	   	=> array('type' => 'error', 	'message' => __('Player could not be created.')),
-				'player_inserted'		   	=> array('type' => 'success', 	'message' => __('Player created.')),
-				'player_delete_failed'	   	=> array('type' => 'error', 	'message' => __('Player could not be deleted.')),
-				'player_deleted'		   	=> array('type' => 'updated', 	'message' => __('Player deleted.')),
-				'player_failed_confirm'		=> array('type' => 'error', 	'message' => __('Could not confirm if player already exists.')),
-				'player_failed_duplicate'	=> array('type' => 'error', 	'message' => __('Player already exists.')),
-				'player_no_first_name'		=> array('type' => 'error', 	'message' => __('First Name is required.')),
-				'player_no_last_name'		=> array('type' => 'error', 	'message' => __('Last Name is required.')),
-				'player_no_email'			=> array('type' => 'error', 	'message' => __('Email is required.')),
-				'player_invalid_email'		=> array('type' => 'error', 	'message' => __('Email is malformed.')),
-				'player_no_division'		=> array('type' => 'error', 	'message' => __('Division is required.')),
+				'player_select_failed'			=> array('type' => 'error', 	'message' => __('Could not locate selected player. <a href="?page=clubhouse-config">View Player List</a>')),
+				'player_update_failed'	   		=> array('type' => 'error', 	'message' => __('Could not update player information. Please try again.')),
+				'player_updated'	    		=> array('type' => 'updated', 	'message' => __('Player information updated.')),
+				'player_insert_failed'	   		=> array('type' => 'error', 	'message' => __('Player could not be created.')),
+				'player_inserted'		   		=> array('type' => 'success', 	'message' => __('Player created.')),
+				'player_delete_failed'	   		=> array('type' => 'error', 	'message' => __('Player could not be deleted.')),
+				'player_deleted'		   		=> array('type' => 'updated', 	'message' => __('Player deleted.')),
+				'player_failed_confirm'			=> array('type' => 'error', 	'message' => __('Could not confirm if player already exists.')),
+				'player_failed_duplicate'		=> array('type' => 'error', 	'message' => __('Player already exists.')),
+				'player_no_first_name'			=> array('type' => 'error', 	'message' => __('First Name is required.')),
+				'player_no_last_name'			=> array('type' => 'error', 	'message' => __('Last Name is required.')),
+				'player_no_email'				=> array('type' => 'error', 	'message' => __('Email is required.')),
+				'player_invalid_email'			=> array('type' => 'error', 	'message' => __('Email is malformed.')),
+				'player_no_division'			=> array('type' => 'error', 	'message' => __('Division is required.')),
+				'player_invalid_pdga_number'	=> array('type' => 'error', 	'message' => __('Please enter a valid pdga number.')),
 		));
 
 		// Get Divisions
@@ -74,7 +75,7 @@ class Players {
 		$player = $wpdb->get_row(
 				"SELECT * FROM `" . CLUBHOUSE_TABLE_PLAYERS . "` WHERE `id` = '" . $wpdb->escape($id) . "';", 'ARRAY_A'
 		);
-		if (empty($player)) {
+		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('player_select_failed');
 		}
 		return $player;
@@ -88,8 +89,7 @@ class Players {
 		global $wpdb;
 		$query = !empty($query) ? $query : "SELECT * FROM `" . CLUBHOUSE_TABLE_PLAYERS . "`;";
 		$players = $wpdb->get_results($query, 'ARRAY_A');
-		if (empty($players)) {
-
+		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('player_select_failed');
 		}
 		return $players;
@@ -133,7 +133,14 @@ class Players {
 		global $wpdb;
 
 		// Get Player
-		$player = '';
+		$player = array(
+			'id'=>'',
+			'first_name'=>'',
+			'last_name'=>'',
+			'email'=>'',
+			'division_id'=>'',
+			'pdga_number'=>'',
+		);
 		if ($config['action'] == 'edit' && !empty($config['id'])) {
 			$player = $this->getPlayer($config['id']);
 		}
@@ -142,6 +149,7 @@ class Players {
 		if ( !empty($_POST['submit']) ) {
 
 			// Validate Referrer
+			global $clubhouse_nonce;
 			check_admin_referer( $clubhouse_nonce );
 			if ( !empty($_POST['form_check']) && $_POST['form_check'] == 'player') {
 
@@ -152,12 +160,13 @@ class Players {
 				}
 
 				// Check Required
-				if (empty($player['first_name'])) 	$GLOBALS['CH_SysMessages']->collectResponse('no_first_name');
-				if (empty($player['last_name'])) 	$GLOBALS['CH_SysMessages']->collectResponse('no_last_name');
-				if (empty($player['email'])) 		$GLOBALS['CH_SysMessages']->collectResponse('no_email');
+				if (empty($player['first_name'])) 			$GLOBALS['CH_SysMessages']->collectResponse('player_no_first_name');
+				if (empty($player['last_name'])) 			$GLOBALS['CH_SysMessages']->collectResponse('player_no_last_name');
+				if (empty($player['email'])) 				$GLOBALS['CH_SysMessages']->collectResponse('player_no_email');
 				if (!empty($player['email']) && !is_email($player['email']))
-													$GLOBALS['CH_SysMessages']->collectResponse('invalid_email');
-				if (empty($player['division_id'])) 	$GLOBALS['CH_SysMessages']->collectResponse('no_division');
+															$GLOBALS['CH_SysMessages']->collectResponse('player_invalid_email');
+				if (empty($player['division_id'])) 			$GLOBALS['CH_SysMessages']->collectResponse('player_no_division');
+				if (!is_numeric($player['pdga_number'])) 	$GLOBALS['CH_SysMessages']->collectResponse('player_invalid_pdga_number');
 
 				// Proceed if No Errors
 				if (empty($GLOBALS['CH_SysMessages']->responses)) {
@@ -167,9 +176,9 @@ class Players {
 
 						// Check for Duplicate
 						$check_player = $this->confirmDuplicate(array(
-							`first_name`  => $wpdb->escape($first_name),
-							`last_name`   => $wpdb->escape($last_name),
-							`email`       => $wpdb->escape($email),
+							'first_name'  => $wpdb->escape($player['first_name']),
+							'last_name'   => $wpdb->escape($player['last_name']),
+							'email'       => $wpdb->escape($player['email']),
 						));
 
 						// Insert Player
@@ -187,12 +196,12 @@ class Players {
 							) {
 
 								// Error
-								$GLOBALS['CH_SysMessages']->collectResponse('insert_failed');
+								$GLOBALS['CH_SysMessages']->collectResponse('player_insert_failed');
 
 							} else {
 
 								// Success
-								$GLOBALS['CH_SysMessages']->collectResponse('inserted');
+								$GLOBALS['CH_SysMessages']->collectResponse('player_inserted');
 
 								// Get Player and Set Action
 								$lastid = $wpdb->insert_id;
@@ -203,10 +212,10 @@ class Players {
 
 						// Player Already Registered
 						} else {
-							$GLOBALS['CH_SysMessages']->collectResponse('failed_duplicate');
+							$GLOBALS['CH_SysMessages']->collectResponse('player_failed_duplicate');
 						}
 
-					// update player
+					// Update Player
 					} elseif ( $_POST['action'] == 'edit' ) {
 
 						if ($wpdb->update(
@@ -232,7 +241,7 @@ class Players {
 						) === false ) {
 
 							// Error
-							$GLOBALS['CH_SysMessages']->collectResponse('update_failed');
+							$GLOBALS['CH_SysMessages']->collectResponse('player_update_failed');
 
 						} else {
 
@@ -262,7 +271,9 @@ class Players {
 
 			<form id="clubhouse-player-form" method="post" action="?page=<?php echo $_GET['page']; ?>&control=players">
 
-				<?php clubhouse_nonce_field($clubhouse_nonce); // form validation ?>
+				<?php
+				global $clubhouse_nonce;
+				clubhouse_nonce_field($clubhouse_nonce); // form validation ?>
 				<input type="hidden" name="id" value="<?php echo $player['id']; ?>">
 				<input type="hidden" name="action" value="<?php echo $config['action']; ?>">
 				<input type="hidden" name="form_check" value="player">
@@ -288,7 +299,7 @@ class Players {
 						<option value="">Choose One</option>
 						<?php foreach ($this->divisions as $division) { ?>
 							<?php $selected = ($player['division_id'] == $division['id']) ? ' selected' : '' ; ?>
-							<option value="<?php echo $division['id']; ?>"<?php echo $selected; ?>><?php echo $division['name']; ?></option>
+							<option value="<?php echo $division['id']; ?>"<?php echo $selected; ?>><?php echo $division['division_name']; ?></option>
 						<?php } ?>
 					</select>
 				</div>
@@ -325,15 +336,15 @@ class Players {
 		// Delete Player
 		if ( $config['action'] == 'delete' && !empty($config['id']) && is_numeric($config['id']) ) {
 			if (!$wpdb->query( "DELETE FROM `" . CLUBHOUSE_TABLE_PLAYERS . "` WHERE `id` = '" . $config['id'] . "';")) {
-				$GLOBALS['CH_SysMessages']->collectResponse('delete_failed');
+				$GLOBALS['CH_SysMessages']->collectResponse('player_delete_failed');
 			} else {
-				$GLOBALS['CH_SysMessages']->collectResponse('deleted');
+				$GLOBALS['CH_SysMessages']->collectResponse('player_deleted');
 			}
 		}
 
 		// Get Players Query
 		$query = "
-			SELECT `p`.*, `d`.`name` AS `division_name`
+			SELECT `p`.*, `d`.`division_name`
 			FROM `" . CLUBHOUSE_TABLE_PLAYERS . "` AS `p`
 			JOIN `" . CLUBHOUSE_TABLE_DIVISIONS . "` AS `d`
 			ON `p`.`division_id` = `d`.`id`
@@ -401,4 +412,22 @@ class Players {
 
 }
 
+
+/****** AJAX ******/
+
+add_action( 'admin_footer', 'players_ajax_javascript' );
+function players_ajax_javascript() {
+	?>
+<script type="text/javascript" >
+jQuery(document).ready(function($) {
+
+	// Player Score Character Limiting
+	$('input[name="pdga_number"]').bind('keyup', function() {
+		$(this).val($(this).val().replace(/[^0-9]/g, ""));
+	});
+
+});
+</script>
+<?php
+}
 ?>

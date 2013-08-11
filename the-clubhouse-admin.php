@@ -75,7 +75,11 @@ add_action('admin_init', 'clubhouse_admin_init');
 // Admin Page Handler
 function clubhouse_admin_conf() {
 
+	// Memory Usage
 	$start_memory = memory_get_usage() / 1024 / 1024;
+
+	// Default Control Servered
+	if (empty($_GET['control'])) $_GET['control'] = 'players';
 
 	// System Title
 	$clubhouse_title = '<h1>' . __('The Clubhouse') . '</h1>';
@@ -86,6 +90,8 @@ function clubhouse_admin_conf() {
 		array('title' => 'Events', 		 'slug' => 'events'),
 		array('title' => 'Divisions', 	 'slug' => 'divisions'),
 		array('title' => 'Registration', 'slug' => 'registration'),
+		array('title' => 'Courses', 	 'slug' => 'courses'),
+		array('title' => 'Directors', 	 'slug' => 'directors'),
 	);
 	$clubhouse_nav = '<div id="clubhouse-nav">';
 	$clubhouse_nav .= '<ul>';
@@ -97,7 +103,7 @@ function clubhouse_admin_conf() {
 	$clubhouse_nav .= '</div>';
 
 
-	// Control Sets
+	// Control Set Server
 	$clubhouse_controlset = '<div id="the-clubhouse">';
 	if (!empty($_GET['control'])) {
 
@@ -108,7 +114,7 @@ function clubhouse_admin_conf() {
 		$id = !empty($_REQUEST['id']) && is_numeric($_REQUEST['id']) ? $_REQUEST['id'] : '';
 
 		// Call Controlset
-		// TODO: Simply this call system, perhaps with a wrapper class
+		// TODO: Simplify this call system. Perhaps with a wrapper class?
 		switch($_GET['control']) {
 
 			case "divisions":
@@ -120,7 +126,7 @@ function clubhouse_admin_conf() {
 					$clubhouse_controlset .= $GLOBALS['CH_Divisions']->manageDivision(array('action' => 'edit', 'id' => $id));
 
 				} else {
-					$clubhouse_controlset .= $GLOBALS['CH_Divisions']->getDivisionList(array('action' => ($_GET['action'] == 'delete' ? 'delete' : ''), 'id' => $id));
+					$clubhouse_controlset .= $GLOBALS['CH_Divisions']->getDivisionList(array('action' => ($action == 'delete' ? 'delete' : ''), 'id' => $id));
 
 				}
 
@@ -135,7 +141,7 @@ function clubhouse_admin_conf() {
 					$clubhouse_controlset .= $GLOBALS['CH_Players']->managePlayer(array('action' => 'edit', 'id' => $id));
 
 				} else {
-					$clubhouse_controlset .= $GLOBALS['CH_Players']->getPlayerList(array('action' => ($_GET['action'] == 'delete' ? 'delete' : ''), 'id' => $id));
+					$clubhouse_controlset .= $GLOBALS['CH_Players']->getPlayerList(array('action' => ($action == 'delete' ? 'delete' : ''), 'id' => $id));
 
 				}
 				break;
@@ -149,7 +155,35 @@ function clubhouse_admin_conf() {
 					$clubhouse_controlset .= $GLOBALS['CH_Events']->manageEvent(array('action' => 'edit', 'id' => $id));
 
 				} else {
-					$clubhouse_controlset .= $GLOBALS['CH_Events']->getEventList(array('action' => ($_GET['action'] == 'delete' ? 'delete' : ''), 'id' => $id));
+					$clubhouse_controlset .= $GLOBALS['CH_Events']->getEventList(array('action' => ($action == 'delete' ? 'delete' : ''), 'id' => $id));
+
+				}
+				break;
+
+			case "courses":
+
+				if ($action == 'add') {
+					$clubhouse_controlset .= $GLOBALS['CH_Courses']->manageCourse(array('action' => 'add'));
+
+				} elseif ($action == 'edit' && !empty($id)) {
+					$clubhouse_controlset .= $GLOBALS['CH_Courses']->manageCourse(array('action' => 'edit', 'id' => $id));
+
+				} else {
+					$clubhouse_controlset .= $GLOBALS['CH_Courses']->getCourseList(array('action' => ($action == 'delete' ? 'delete' : ''), 'id' => $id));
+
+				}
+				break;
+
+			case "directors":
+
+				if ($action == 'add') {
+					$clubhouse_controlset .= $GLOBALS['CH_Directors']->manageDirector(array('action' => 'add'));
+
+				} elseif ($action == 'edit' && !empty($id)) {
+					$clubhouse_controlset .= $GLOBALS['CH_Directors']->manageDirector(array('action' => 'edit', 'id' => $id));
+
+				} else {
+					$clubhouse_controlset .= $GLOBALS['CH_Directors']->getDirectorList(array('action' => ($action == 'delete' ? 'delete' : ''), 'id' => $id));
 
 				}
 				break;
@@ -160,7 +194,7 @@ function clubhouse_admin_conf() {
 	}
 	$clubhouse_controlset .= '</div>';
 
-	// Message Output
+	// Messaging Output
 	$clubhouse_messages = '';
 	$clubhouse_msgs = $GLOBALS['CH_SysMessages']->returnMessages();
 	if ( !empty($clubhouse_msgs) ) {
@@ -178,7 +212,6 @@ function clubhouse_admin_conf() {
 	echo $clubhouse_title . $clubhouse_messages . $clubhouse_nav . $clubhouse_controlset;
 
 	// Memory Check
-
 	$end_memory = memory_get_usage() / 1024 / 1024;
 	$peak_memory = memory_get_peak_usage() / 1024 / 1024;
 	echo "<p>Start: " . $start_memory . "<br />End: " . $end_memory . "<br />Used: " . ($end_memory - $start_memory) . " MB<br />Peak: " . $peak_memory . "</p>";
