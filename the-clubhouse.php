@@ -5,7 +5,7 @@
 /*
 Plugin Name: The Clubhouse
 Plugin URI:
-Description: This is utility specifically designed for Disc Golf clubs. It provides means to track players across events, and view statistics.
+Description: This is a utility specifically designed for Disc Golf clubs. It provides a means to track players across events, and view statistics.
 Version: 0.0.1
 Author: Brad Groat
 Author URI: http://bradgroat.com
