@@ -346,7 +346,7 @@ class Courses {
 						<td><?php echo $course['city']; ?></td>
 						<td><?php echo $course['state']; ?></td>
 						<td><?php echo $course['country']; ?></td>
-						<td>
+						<td class="clubhouse-list-controls">
 							<a href="?page=<?php echo $_GET['page']; ?>&control=courses&action=edit&id=<?php echo $course['id']; ?>">edit</a> |
 							<a href="?page=<?php echo $_GET['page']; ?>&control=courses&action=delete&id=<?php echo $course['id']; ?>" onclick="return confirm('Are you sure you want to delete this course?');">delete</a>
 						</td>

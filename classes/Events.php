@@ -350,7 +350,7 @@ class Events {
 						<tr>
 							<td><?php echo $event['event_name']; ?></td>
 							<td><?php echo $event['type']; ?></td>
-							<td>
+							<td class="clubhouse-list-controls">
 								<a href="?page=<?php echo $_GET['page']; ?>&control=events&action=edit&id=<?php echo $event['id']; ?>">edit</a> |
 								<a href="?page=<?php echo $_GET['page']; ?>&control=events&action=delete&id=<?php echo $event['id']; ?>" onclick="return confirm('Are you sure you want to delete this event?');">delete</a>
 							</td>

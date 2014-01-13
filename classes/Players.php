@@ -391,7 +391,7 @@ class Players {
 						<td><?php echo $player['first_name']; ?> <?php echo $player['last_name']; ?></td>
 						<td><?php echo $player['email']; ?></td>
 						<td><?php echo (!empty($player['pdga_number']) ? $player['pdga_number'] : '&nbsp;'); ?></td>
-						<td>
+						<td class="clubhouse-list-controls">
 							<a href="?page=<?php echo $_GET['page']; ?>&control=players&action=edit&id=<?php echo $player['id']; ?>">edit</a> |
 							<a href="?page=<?php echo $_GET['page']; ?>&control=players&action=delete&id=<?php echo $player['id']; ?>" onclick="return confirm('Are you sure you want to delete this player?');">delete</a>
 						</td>

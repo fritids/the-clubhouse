@@ -348,7 +348,7 @@ class Directors {
 						<td><?php echo $director['last_name']; ?></td>
 						<td><?php echo $director['email']; ?></td>
 						<td><?php echo $director['phone_number']; ?></td>
-						<td>
+						<td class="clubhouse-list-controls">
 							<a href="?page=<?php echo $_GET['page']; ?>&control=directors&action=edit&id=<?php echo $director['id']; ?>">edit</a> |
 							<a href="?page=<?php echo $_GET['page']; ?>&control=directors&action=delete&id=<?php echo $director['id']; ?>" onclick="return confirm('Are you sure you want to delete this director?');">delete</a>
 						</td>

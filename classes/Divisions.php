@@ -287,7 +287,7 @@ class Divisions {
 						<tr id="division-<?php echo $division['id']; ?>">
 							<td>.</td>
 							<td><?php echo $division['division_name']; ?></td>
-							<td>
+							<td class="clubhouse-list-controls">
 								<a href="?page=<?php echo $_GET['page']; ?>&control=divisions&action=edit&id=<?php echo $division['id']; ?>">edit</a> |
 								<a href="?page=<?php echo $_GET['page']; ?>&control=divisions&action=delete&id=<?php echo $division['id']; ?>" onclick="return confirm('Are you sure you want to delete this division?');">delete</a>
 							</td>

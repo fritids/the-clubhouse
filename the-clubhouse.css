@@ -1,9 +1,6 @@
 #the-clubhouse {
 	position:relative;
-	padding:20px;
 	margin-right:15px;
-	border:2px solid black;
-	border-radius:0px 5px 5px 5px;
 	z-index:1;
 }
 
@@ -26,15 +23,14 @@
 #clubhouse-nav ul li {
 	display:block;
 	float:left;
-	padding:6px 15px 3px 15px;
+	padding:6px 15px;
 	margin:0px 3px 0px 0px;
 	background-color:#FFFFFF;
-	border:2px solid black;
-	border-radius:5px 5px 0px 0px;
+	border-radius:5px;
 }
 #clubhouse-nav ul li.current {
 	border-bottom:none;
-	padding:6px 15px 5px 15px;
+	background:#CCC;
 }
 #clubhouse-nav ul li a {
 	height:100%;
@@ -50,26 +46,40 @@
 .clubhouse-table {
 	width:100%;
 	margin-bottom:20px;
+	border:2px solid #D4D4D4;
+	border-radius:5px 5px 5px 5px;
 }
 .clubhouse-table thead {
-	background-color:#AAAAAA;
+	background-color:#EDEDED;
 }
-.clubhouse-table tbody tr:nth-child(odd) td {
-	background-color:#EEEEEE;
+.clubhouse-table tbody td {
+	border-bottom:2px solid #D4D4D4;
+}
+.clubhouse-table tbody tr:last-child td {
+	border-bottom:0;
 }
 .clubhouse-table th {
 	text-align:left;
 }
 .clubhouse-table th,
 .clubhouse-table td {
-	padding:3px 5px;
+	padding:5px;
 }
 .clubhouse-list-heading {
 	font-size:1.2em;
 }
 .clubhouse-list-columns {
-	font-size:0.8em;
-	background-color:#CCCCCC;
+	font-size:1.0em;
+	background-color: #D4D4D4; /* #D4D4D4;*/ 
+	background-image: url(images/fallback-gradient.png); 
+	background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#EDEDED), to(#D4D4D4));
+	background-image: -webkit-linear-gradient(top, #EDEDED, #D4D4D4); 
+	background-image:    -moz-linear-gradient(top, #EDEDED, #D4D4D4);
+	background-image:     -ms-linear-gradient(top, #EDEDED, #D4D4D4);
+	background-image:      -o-linear-gradient(top, #EDEDED, #D4D4D4);
+}
+.clubhouse-list-controls {
+	width:100px;
 }
 
 /**
