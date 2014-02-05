@@ -15,19 +15,21 @@ class Installer {
 		// Plugin DB Version
 		$db_version = get_option( "CLUBHOUSE_DB_VERSION" );
 
-		// Install / Update
+		// Confirm Installed
 		$installed = $this->confirmExists();
-		if ($installed) {
+
+		// Install
+		if (!$installed) {
+			$this->setupClubhouse();
+
+		// Update
+		} else {
 			$cur_version = $this->checkVersion();
 			if ($cur_version !== $db_version) {
 				$this->updateDB();
 			}
-		}
-		// ToDo: make update method
-		// else {
-		///	$this->setupClubhouse();
-		//}
 
+		}
 
 		// Initialize in Wordpress
 		add_action('init',array(&$this,'init')); // called on page load
@@ -88,13 +90,13 @@ class Installer {
 		$check = $wpdb->get_row("SELECT * FROM `" . CLUBHOUSE_TABLE_SETTINGS . "` WHERE `id` = 1");
 		if (empty($check)) {
 			$rows_affected = $wpdb->insert( CLUBHOUSE_TABLE_SETTINGS,
-					array(
-							'id' => 1,
-							'time' => current_time('mysql'),
-							'num_tags' => 25,
-							'db_ver' => CLUBHOUSE_DB_VERSION,
-							'app_ver' => CLUBHOUSE_VERSION
-					)
+				array(
+					'id' => 1,
+					'time' => current_time('mysql'),
+					'num_tags' => 25,
+					'db_ver' => CLUBHOUSE_DB_VERSION,
+					'app_ver' => CLUBHOUSE_VERSION
+				)
 			);
 		}
 
@@ -193,10 +195,17 @@ class Installer {
 		";
 		dbDelta($sql);
 
+		return false;
+
 	}
 
 	function updateDB() {
 
+		/**
+		 * @todo: setup version checks to install additions to the database
+		 */
+
+		return false;
 	}
 
 }
