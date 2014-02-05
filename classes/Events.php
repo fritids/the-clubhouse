@@ -57,6 +57,7 @@ class Events {
 				'event_failed_confirm'		=> array('type' => 'error', 	'message' => __('Could not confir m if event already exists.')),
 				'event_failed_duplicate'	=> array('type' => 'error', 	'message' => __('Event already exists.')),
 				'event_no_name'				=> array('type' => 'error', 	'message' => __('You must provide a name.')),
+				'event_no_director'			=> array('type' => 'error', 	'message' => __('You must provide a director.')),
 				'event_no_divisions'		=> array('type' => 'error', 	'message' => __('You must select at least one division.')),
 				'event_no_type'				=> array('type' => 'error', 	'message' => __('You must select a type.')),
 		));
@@ -73,7 +74,15 @@ class Events {
 	function getEvent($id) {
 		global $wpdb;
 		$event = $wpdb->get_row(
-				"SELECT * FROM `" . CLUBHOUSE_TABLE_EVENTS . "` WHERE `id` = '" . $wpdb->escape($id) . "';", 'ARRAY_A'
+			$wpdb->prepare(
+				"
+					SELECT *
+					FROM `" . CLUBHOUSE_TABLE_EVENTS . "`
+					WHERE `id` = %d;
+				",
+				$id
+			),
+			'ARRAY_A'
 		);
 		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('event_select_failed');
@@ -102,8 +111,14 @@ class Events {
 	function confirmDuplicate($config = array()) {
 		global $wpdb;
 		$event = $wpdb->get_row(
-				"SELECT `id` FROM `" . CLUBHOUSE_TABLE_EVENTS . "` WHERE
-				`event_name` = '" . $wpdb->escape($config['event_name']) . "';"
+			$wpdb->prepare(
+				"
+					SELECT `id`
+					FROM `" . CLUBHOUSE_TABLE_EVENTS . "`
+					WHERE `event_name` = %s;
+				",
+				$config['event_name']
+			)
 		);
 		if (!empty($wpdb->error)) {
 			$GLOBALS['CH_SysMessages']->collectResponse('event_failed_confirm');
@@ -125,6 +140,7 @@ class Events {
 		$event = array(
 			'id'=>'',
 			'event_name'=>'',
+			'director_id'=>'',
 			'divisions'=>'',
 			'email'=>'',
 			'division_id'=>'',
@@ -149,6 +165,7 @@ class Events {
 
 				// Check Required
 				if (empty($event['event_name'])) $GLOBALS['CH_SysMessages']->collectResponse('event_no_name');
+				if (empty($event['director_id']))   $GLOBALS['CH_SysMessages']->collectResponse('event_no_director');
 				if (empty($event['divisions']))  $GLOBALS['CH_SysMessages']->collectResponse('event_no_divisions');
 				if (empty($event['type'])) 		 $GLOBALS['CH_SysMessages']->collectResponse('event_no_type');
 
@@ -166,11 +183,20 @@ class Events {
 						// Insert Event
 						if (empty($check_event)) {
 
-							if (!$wpdb->query(
-									"INSERT INTO `" . CLUBHOUSE_TABLE_EVENTS . "` SET
-									`event_name`  = '" . $wpdb->escape($_POST['event_name']) . "',
-									`divisions`   = '" . $wpdb->escape(serialize($event['divisions'])) . "',
-									`type` 		  = '" . $wpdb->escape($event['type']) . "';"
+							if(!$wpdb->insert(
+									CLUBHOUSE_TABLE_EVENTS,
+									array(
+										'event_name'  => $_POST['event_name'],
+										'director_id' => $_POST['director_id'],
+										'divisions'   => serialize($event['divisions']),
+										'type'		  => $event['type']
+									),
+									array(
+										'%s',
+										'%d',
+										'%s',
+										'%s',
+									)
 							)) {
 
 								// Error
@@ -201,11 +227,13 @@ class Events {
 								CLUBHOUSE_TABLE_EVENTS,
 								array(
 										'event_name'	=> $wpdb->escape($event['event_name']),	   			// string
+										'director_id'	=> $event['director_id'],	   		// string
 										'divisions' 	=> $wpdb->escape(serialize($event['divisions'])),	// string
 										'type' 			=> $wpdb->escape($event['type']),	  				// string
 								),
 								array( 'id' => $config['id'] ),
 								array(
+										'%s', // string
 										'%s', // string
 										'%s', // string
 										'%s', // string
@@ -237,6 +265,9 @@ class Events {
 
 		// Prep Data
 		$event['divisions'] = is_array($event['divisions']) ? $event['divisions'] : unserialize(stripslashes($event['divisions']));
+
+		// Get Directors
+		$event['directors'] = $GLOBALS['CH_Directors']->getDirectors("SELECT `id`, CONCAT(`first_name`, ' ', `last_name`) AS `name`FROM `" . CLUBHOUSE_TABLE_DIRECTORS . "`;");
 
 		// Get Manager
 		ob_start();
